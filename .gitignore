@@ -1,0 +1,39 @@
+# JSON 파일
+*.json
+
+# 로그 파일
+*.log
+
+# 환경 설정 파일
+.env
+.env.local
+.env.*.local
+
+# 의존성 디렉토리
+/node_modules
+/vendor
+
+# IDE 설정 파일
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS 생성 파일
+.DS_Store
+Thumbs.db
+
+# 빌드 출력 디렉토리
+/dist
+/build
+/out
+
+# 임시 파일
+*.tmp
+*.temp
+*.swp
+*~
+
+# 캐시 파일
+.cache/
+*.cache 
