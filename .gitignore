@@ -36,4 +36,14 @@ Thumbs.db
 
 # 캐시 파일
 .cache/
-*.cache 
+*.cache
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 기존의 다른 ignore 규칙들...
+*.json
+.env
+# ... 등 
