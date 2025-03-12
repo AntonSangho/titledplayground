@@ -1,6 +1,7 @@
 import pyrealsense2 as rs
 import numpy as np
 import cv2
+import json
 
 # RealSense 카메라 초기화
 def initialize_camera():
@@ -14,9 +15,21 @@ def initialize_camera():
     # 카메라 시작
     profile = pipeline.start(config)
     
-    # 깊이 센서의 깊이 스케일 가져오기
+    # 깊이 센서 가져오기
     depth_sensor = profile.get_device().first_depth_sensor()
     depth_scale = depth_sensor.get_depth_scale()
+    
+    # HighDensityPreset.json 설정 로드 및 적용
+    try:
+        with open('HighDensityPreset.json', 'r') as f:
+            preset = json.load(f)
+            
+        # 깊이 센서에 프리셋 설정 적용
+        for key in preset:
+            if depth_sensor.supports(key):
+                depth_sensor.set_option(key, float(preset[key]))
+    except Exception as e:
+        print(f"프리셋 로드 중 오류 발생: {e}")
     
     # 컬러 프레임과 깊이 프레임 정렬 객체
     align = rs.align(rs.stream.color)

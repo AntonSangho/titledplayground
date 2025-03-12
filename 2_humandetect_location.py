@@ -191,9 +191,9 @@ def main():
                     viz_y = int(circle_center[1] + norm_y * circle_radius * depth_factor)
                     
                     # 점 그리기
-                    cv2.circle(viz_frame, (viz_x, viz_y), 5, (0, 0, 255), -1)
-                    cv2.putText(viz_frame, str(person_id), (viz_x + 10, viz_y),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                    #cv2.circle(viz_frame, (viz_x, viz_y), 5, (0, 0, 255), -1)
+                    #cv2.putText(viz_frame, str(person_id), (viz_x + 10, viz_y),
+                    #           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             
             # 좌우 영상 합치기
             display = np.hstack((color_image, viz_frame))
