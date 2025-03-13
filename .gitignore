@@ -47,3 +47,5 @@ __pycache__/
 *.json
 .env
 # ... 등 
+
+/Roboflow/captured_images
