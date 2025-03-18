@@ -49,3 +49,11 @@ __pycache__/
 # ... 등 
 
 /Roboflow/captured_images
+/Roboflow/titledplayground2.v1i.yolov8/
+
+/LogitechC270/runs/
+/LogitechC270/data.yaml
+/LogitechC270/yolov8n.pt
+
+
+
