@@ -96,7 +96,8 @@ def main():
             break
         
         # 객체 감지 수행
-        results = model(frame, conf=0.25)  # 신뢰도 임계값 설정
+        #results = model(frame, conf=0.25)  # 신뢰도 임계값 설정
+        results = model(frame, conf=0.4)  # 신뢰도 임계값 설정
         
         display_image = frame.copy()
         
