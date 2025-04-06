@@ -5,9 +5,9 @@ public class MarkerManager : MonoBehaviour
 {
     public GameObject markerPrefab;
     public Transform gameBoard;
-    public Vector2 boardSize = new Vector2(1.2f, 0.9f);
+    public Vector2 boardSize = new Vector2(2.0f, 2.0f);
     public float scaleMultiplier = 5.0f;
-    
+
     // 마커 색상으로 ID 구분 (다른 ID는 다른 색상)
     public bool useColorForID = true;
     
@@ -60,7 +60,7 @@ public class MarkerManager : MonoBehaviour
                 }
                 
                 // ID에 따라 마커 크기 조정 (선택 사항)
-                float scale = 0.1f * (1.0f + (obj.id % 3) * 0.2f);
+                float scale = 0.3f;
                 marker.transform.localScale = new Vector3(scale, scale, scale);
                 
                 markers.Add(obj.id, marker);
@@ -87,8 +87,8 @@ public class MarkerManager : MonoBehaviour
     Vector3 ConvertToUnityPosition(float x_cm, float y_cm)
     {
         // cm에서 Unity 단위로 스케일 변환 (스케일 멀티플라이어 적용)
-        float scaleX = (boardSize.x / 120f) * scaleMultiplier;
-        float scaleY = (boardSize.y / 90f) * scaleMultiplier;
+        float scaleX = (boardSize.x / 15f) * scaleMultiplier;
+        float scaleY = (boardSize.y / 15f) * scaleMultiplier;
         
         // 좌표계 변환 (원점 이동 및 Y축 반전)
         float unity_x = (x_cm * scaleX) - ((boardSize.x * scaleMultiplier) / 2);
@@ -125,11 +125,11 @@ public class MarkerManager : MonoBehaviour
                 Vector3 localPos = gameBoard.InverseTransformPoint(position);
                 
                 // Unity 좌표를 다시 cm 좌표로 변환
-                float scaleXForGUI = (boardSize.x / 120f) * scaleMultiplier;
-                float scaleYForGUI = (boardSize.y / 90f) * scaleMultiplier;
+                float scaleXForGUI = (boardSize.x / 15f) * scaleMultiplier;
+                float scaleYForGUI = (boardSize.y / 15f) * scaleMultiplier;
                 
-                float boardX = (localPos.x + ((boardSize.x * scaleMultiplier) / 2)) / scaleXForGUI * 120f;
-                float boardY = (((boardSize.y * scaleMultiplier) / 2) - localPos.z) / scaleYForGUI * 90f;
+                float boardX = (localPos.x + ((boardSize.x * scaleMultiplier) / 2)) / scaleXForGUI * 15f;
+                float boardY = (((boardSize.y * scaleMultiplier) / 2) - localPos.z) / scaleYForGUI * 15f;
                 
                 GUILayout.Label($"ID: {id} - 위치: ({boardX:F1}, {boardY:F1})cm");
             }
