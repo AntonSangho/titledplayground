@@ -4,7 +4,7 @@ from ultralytics import YOLO
 
 def main():
     # 카메라 열기 (필요한 경우 인덱스 조정)
-    camera_index = 0   # 기본 카메라 인덱스
+    camera_index = 4   # 기본 카메라 인덱스
     
     
     # 학습된 모델 로드

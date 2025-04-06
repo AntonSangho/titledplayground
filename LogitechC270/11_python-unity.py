@@ -12,12 +12,16 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
     # 카메라 열기 (USB 웹캠)
-    camera_index = 2 
+    camera_index = 4 
     
     # 학습된 모델 로드
     model_path = "runs/detect/titledplayground2_model4/weights/best.pt"
     print(f"모델 로드 중: {model_path}")
     model = YOLO(model_path)
+
+    if hasattr(model, 'names'):
+        print(f"모델 클래스 정보: {model.names}")
+        print(f"감지 가능한 클래스 수: {len(model.names)}") 
     
     # 카메라 열기
     cap = cv2.VideoCapture(camera_index)

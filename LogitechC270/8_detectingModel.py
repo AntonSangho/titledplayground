@@ -4,7 +4,7 @@ from ultralytics import YOLO
 
 def main():
     # 카메라 인덱스를 2번으로 고정
-    camera_index = 2
+    camera_index = 4 
     
     # 학습된 모델 로드
     model_path = "runs/detect/titledplayground2_model4/weights/best.pt"
