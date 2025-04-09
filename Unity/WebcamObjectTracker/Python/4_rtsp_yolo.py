@@ -4,7 +4,6 @@ import socket
 import json
 import time
 from ultralytics import YOLO
-import 
 
 class ObjectTracker:
     def __init__(self):
