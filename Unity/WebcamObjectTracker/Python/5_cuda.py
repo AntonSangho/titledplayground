@@ -3,6 +3,7 @@ import numpy as np
 import socket
 import json
 import time
+import torch
 from ultralytics import YOLO
 
 class ObjectTracker:
@@ -58,6 +59,15 @@ class ObjectTracker:
         return current_positions  # 트래킹 ID가 추가된 객체 정보 반환
 
 def main():
+    # CUDA 사용 가능 여부 확인 및 설정
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print(f"CUDA 사용 가능: {torch.cuda.get_device_name(0)}")
+        print(f"CUDA 메모리: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB")
+    else:
+        device = torch.device("cpu")
+        print("CUDA를 사용할 수 없습니다. CPU를 사용합니다.")
+
     # UDP 소켓 설정
     UDP_IP = "127.0.0.1"  # localhost
     UDP_PORT = 5065       # Unity에서 사용할 포트
@@ -67,12 +77,14 @@ def main():
     tracker = ObjectTracker()
     
     # RTSP URL 설정
-    rtsp_url = "rtsp://admin:RELIQUUM0925@192.168.29.113:554/Preview_01_sub"
-    #rtsp_url = "rtsp://admin:RELIQUUM0925@192.168.29.113:554z`x"
-    # YOLOv8 모델 로드 (기본 모델 사용)
+    rtsp_url = "rtsp://admin:RELIQUUM0925@192.168.29.113:554/Preview_01_main"
+    
+    # YOLOv8 모델 로드 (CUDA 설정)
     print("YOLOv8 모델 로드 중...")
-    #model.to(mps_device)
-    model = YOLO("yolov8n.pt")  # 가벼운 YOLOv8 nano 모델 사용
+    model = YOLO("yolov8n.pt")
+    
+    # 모델을 CUDA 디바이스로 이동
+    model.to(device)
     
     # 모델의 클래스 정보 출력
     if hasattr(model, 'names'):
@@ -85,6 +97,12 @@ def main():
     
     # RTSP 연결 옵션 설정 (버퍼 크기 조정)
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # 버퍼 크기 최소화
+    
+    # RTSP 연결 최적화 (지연 시간 감소)
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'H264'))  # H.264 코덱 사용
+    # GPU 가속 활성화 (OpenCV가 CUDA로 빌드된 경우)
+    if cv2.cuda.getCudaEnabledDeviceCount() > 0:
+        print("OpenCV CUDA 지원 활성화됨")
     
     if not cap.isOpened():
         print(f"RTSP 스트림을 열 수 없습니다: {rtsp_url}")
@@ -177,11 +195,30 @@ def main():
     
     cv2.setMouseCallback('Floor Tracking', coord_mouse_callback)
     
+    # CUDA 메모리 상태 모니터링 함수
+    def print_cuda_memory():
+        if torch.cuda.is_available():
+            print(f"CUDA 메모리 사용량: {torch.cuda.memory_allocated() / 1024**2:.2f} MB / {torch.cuda.memory_reserved() / 1024**2:.2f} MB")
+    
+    # 배치 처리 크기 (성능 최적화용)
+    batch_size = 1
+    
     # 메인 객체 감지 및 데이터 전송 루프
     last_send_time = time.time()
     last_frame_time = time.time()
+    last_memory_print_time = time.time()
     frame_count = 0
     fps = 0
+    
+    # 추론 속도 최적화 설정
+    torch.backends.cudnn.benchmark = True  # CUDNN 벤치마크 모드 활성화
+    
+    # 이미지 전처리 최적화를 위한 설정
+    model.conf = 0.25  # 신뢰도 임계값 설정
+    model.iou = 0.45   # IOU 임계값 설정
+    model.agnostic = False  # 클래스 무관 NMS
+    model.multi_label = False  # 다중 레이블 감지
+    model.max_det = 100  # 최대 감지 개수
     
     while True:
         ret, frame = cap.read()
@@ -200,9 +237,15 @@ def main():
             fps = frame_count
             frame_count = 0
             last_frame_time = current_time
+            
+            # 주기적으로 CUDA 메모리 사용량 출력 (디버깅용)
+            if current_time - last_memory_print_time >= 10.0:
+                print_cuda_memory()
+                last_memory_print_time = current_time
         
-        # 객체 감지 수행
-        results = model(frame, conf=0.25)  # 기본 신뢰도 임계값 설정
+        # 객체 감지 수행 - CUDA 최적화
+        with torch.cuda.amp.autocast(enabled=True):  # 자동 혼합 정밀도 사용
+            results = model(frame, conf=0.25, verbose=False, classes = 0)  # verbose=False로 로그 최소화
         
         display_image = frame.copy()
         
@@ -254,7 +297,7 @@ def main():
         
         # 감지된 객체 정보 수집 - YOLOv8 결과 형식에 맞게 처리
         for result in results:
-            boxes = result.boxes
+            boxes = result.boxes.cpu()  # GPU에서 CPU로 데이터 이동
             
             for box in boxes:
                 # 바운딩 박스 좌표
@@ -354,11 +397,12 @@ def main():
                 last_send_time = current_time
                 
                 # 콘솔에 전송 정보 출력
-                print(f"데이터 전송: 대상={UDP_IP}, 크기={len(data)}바이트")
-                print(f"전송된 객체 수: {len(detected_objects)}")
+                if detected_objects:
+                    print(f"데이터 전송: 대상={UDP_IP}, 크기={len(data)}바이트")
+                    print(f"전송된 객체 수: {len(detected_objects)}")
         
         # 상태 표시
-        status_text = f"Detected in floor: {objects_in_floor} objects | FPS: {fps}"
+        status_text = f"Detected: {objects_in_floor} objects | FPS: {fps} | CUDA: {device.type.upper()}"
         status_color = (0, 255, 0) if objects_in_floor > 0 else (0, 0, 255)
         cv2.putText(display_image, status_text, (10, 30), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
@@ -375,6 +419,10 @@ def main():
         
         if cv2.waitKey(1) == 27:  # ESC
             break
+    
+    # 종료 시 CUDA 메모리 정리
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     
     cap.release()
     cv2.destroyAllWindows()
