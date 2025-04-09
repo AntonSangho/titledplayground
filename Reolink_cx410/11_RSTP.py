@@ -4,7 +4,7 @@ from ultralytics import YOLO
 
 def main():
     # RTSP URL 설정
-    rtsp_url = "rtsp://admin:RELIQUUM0925@192.168.0.3:554/Preview_01_sub"  # 실제 RTSP URL로 변경 필요
+    rtsp_url = "rtsp://admin:RELIQUUM0925@192.168.29.113:554/Preview_01_sub"  # 실제 RTSP URL로 변경 필요
     
     # YOLO 모델 로드 (기본 YOLOv8n 모델 사용)
     print("YOLO 모델 로딩 중...")
